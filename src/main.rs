@@ -1,52 +1,30 @@
-use std::{
-    fs::{self, File},
-    io::{self, ErrorKind, Write},
-};
+mod input;
+mod storage;
+mod task;
 
-use serde::{Deserialize, Serialize};
+use crate::input::get_user_input;
+use crate::storage::{load_tasks, save_tasks};
+use crate::task::Task;
+use std::io;
 
-#[derive(Serialize, Deserialize)]
-struct Task {
-    description: String,
-    completed: bool,
+enum Command {
+    Add,
+    List,
+    Complete,
+    Quit,
+    Unknown(String),
 }
 
-fn save_tasks(tasks: &Vec<Task>) -> std::io::Result<()> {
-    // The ? operator after each file operation propagates errors, simplifying error handling.
-    //The ? operator propagates any errors.
-
-    // Converts the tasks vector into a JSON String.
-    let serialized = serde_json::to_string(tasks)?;
-
-    // Creates a new file named tasks.json, overwriting if it exists.
-    // Returns a File object.
-    let mut file = File::create("tasks.json")?;
-
-    // Writes the serialized JSON data to the file.
-    // as_bytes() converts the String into a byte array.
-    file.write_all(serialized.as_bytes())?;
-
-    Ok(())
-}
-
-fn load_tasks() -> Vec<Task> {
-    let data = match fs::read_to_string("tasks.json") {
-        Ok(contents) => contents,
-        Err(error) => match error.kind() {
-            ErrorKind::NotFound => {
-                // File doesn't exist, return an empty vector
-                return Vec::new();
-            }
-            other_error => {
-                panic!("Problem reading the file: {:?}", other_error);
-            }
-        },
-    };
-
-    serde_json::from_str(&data).unwrap_or_else(|_| {
-        println!("Error parsing tasks file. Starting with an empty task list.");
-        Vec::new()
-    })
+impl Command {
+    fn from(input: &str) -> Command {
+        match input {
+            "add" => Command::Add,
+            "list" => Command::List,
+            "complete" => Command::Complete,
+            "quit" => Command::Quit,
+            other => Command::Unknown(other.to_string()),
+        }
+    }
 }
 
 fn main() {
@@ -56,21 +34,15 @@ fn main() {
     let mut tasks: Vec<Task> = load_tasks();
 
     loop {
-        println!("Please enter a command (add, list, quit):");
+        println!();
 
-        let mut command = String::new();
+        let input = get_user_input("Please enter a command (add, list, complete, quit):");
 
-        // read std input stream
-        io::stdin()
-            .read_line(&mut command)
-            .expect("Failed to read line.");
-
-        // trim read command
-        let command = command.trim();
+        let command = Command::from(input.trim());
 
         // match keyword
         match command {
-            "add" => {
+            Command::Add => {
                 println!("Enter task description:");
                 let mut description = String::new();
 
@@ -93,7 +65,7 @@ fn main() {
 
                 println!("Task added!!");
             }
-            "list" => {
+            Command::List => {
                 if tasks.is_empty() {
                     println!("No task found.")
                 } else {
@@ -104,7 +76,7 @@ fn main() {
                     }
                 }
             }
-            "complete" => {
+            Command::Complete => {
                 if tasks.is_empty() {
                     println!("No task found to complete.")
                 } else {
@@ -137,11 +109,13 @@ fn main() {
                     }
                 }
             }
-            "quit" => {
+            Command::Quit => {
                 println!("Goodbye!");
                 break;
             }
-            _ => println!("Unknown command: {}", command),
+            Command::Unknown(cmd) => {
+                println!("Unknown command: {}", cmd);
+            }
         }
     }
 }
