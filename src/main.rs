@@ -1,4 +1,7 @@
-use std::io;
+use std::{
+    fs::{self, File},
+    io::{self, ErrorKind, Write},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -8,11 +11,49 @@ struct Task {
     completed: bool,
 }
 
+fn save_tasks(tasks: &Vec<Task>) -> std::io::Result<()> {
+    // The ? operator after each file operation propagates errors, simplifying error handling.
+    //The ? operator propagates any errors.
+
+    // Converts the tasks vector into a JSON String.
+    let serialized = serde_json::to_string(tasks)?;
+
+    // Creates a new file named tasks.json, overwriting if it exists.
+    // Returns a File object.
+    let mut file = File::create("tasks.json")?;
+
+    // Writes the serialized JSON data to the file.
+    // as_bytes() converts the String into a byte array.
+    file.write_all(serialized.as_bytes())?;
+
+    Ok(())
+}
+
+fn load_tasks() -> Vec<Task> {
+    let data = match fs::read_to_string("tasks.json") {
+        Ok(contents) => contents,
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => {
+                // File doesn't exist, return an empty vector
+                return Vec::new();
+            }
+            other_error => {
+                panic!("Problem reading the file: {:?}", other_error);
+            }
+        },
+    };
+
+    serde_json::from_str(&data).unwrap_or_else(|_| {
+        println!("Error parsing tasks file. Starting with an empty task list.");
+        Vec::new()
+    })
+}
+
 fn main() {
     println!("Welcome to Todo CLI!");
 
     // create a tasks vector
-    let mut tasks: Vec<Task> = Vec::new();
+    let mut tasks: Vec<Task> = load_tasks();
 
     loop {
         println!("Please enter a command (add, list, quit):");
@@ -45,6 +86,10 @@ fn main() {
                 };
 
                 tasks.push(task);
+
+                if let Err(e) = save_tasks(&tasks) {
+                    println!("Error saving tasks: {}", e);
+                }
 
                 println!("Task added!!");
             }
@@ -80,6 +125,11 @@ fn main() {
                                 println!("Invalid task number.");
                             } else {
                                 tasks[num - 1].completed = true;
+
+                                if let Err(e) = save_tasks(&tasks) {
+                                    println!("Error saving tasks: {}", e);
+                                }
+
                                 println!("✔ Task {} marked as completed.", num);
                             }
                         }
