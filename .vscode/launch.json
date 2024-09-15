@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug todo_cli",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/target/debug/todo_cli",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "cargo build",
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}
