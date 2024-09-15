@@ -1,5 +1,8 @@
 use std::io;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 struct Task {
     description: String,
     completed: bool,
