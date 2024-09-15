@@ -16,14 +16,17 @@ fn main() {
         // trim read command
         let command = command.trim();
 
-        // case when user quits
-        if command == "quit" {
-            println!("Goodbye!!");
-            break;
+        // match keyword
+        match command {
+            "add" => println!("You chose to add a new task."),
+            "list" => println!("Listing all tasks."),
+            "quit" => {
+                println!("Goodbye!");
+                break;
+            }
+            _ => println!("Unknown command: {}", command),
         }
-        else {
-            println!("You entered {} Command", command);
-        }
+        
     }
 
 }
