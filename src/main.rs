@@ -11,6 +11,7 @@ enum Command {
     Add,
     List,
     Complete,
+    Delete,
     Quit,
     Unknown(String),
 }
@@ -21,6 +22,7 @@ impl Command {
             "add" => Command::Add,
             "list" => Command::List,
             "complete" => Command::Complete,
+            "delete" => Command::Delete,
             "quit" => Command::Quit,
             other => Command::Unknown(other.to_string()),
         }
@@ -103,6 +105,29 @@ fn main() {
                                 }
 
                                 println!("✔ Task {} marked as completed.", num);
+                            }
+                        }
+                        Err(_) => println!("Please enter a valid number."),
+                    }
+                }
+            }
+            Command::Delete => {
+                if tasks.is_empty() {
+                    println!("No tasks to delete.");
+                } else {
+                    let input = get_user_input("Enter the number of the task you want to delete:");
+
+                    match input.trim().parse::<usize>() {
+                        Ok(num) => {
+                            if num == 0 || num > tasks.len() {
+                                println!("Invalid task number.");
+                            } else {
+                                let removed_task = tasks.remove(num - 1);
+                                if let Err(e) = save_tasks(&tasks) {
+                                    println!("Error saving tasks: {}", e);
+                                }
+
+                                println!("Task '{}' deleted.", removed_task.description);
                             }
                         }
                         Err(_) => println!("Please enter a valid number."),
